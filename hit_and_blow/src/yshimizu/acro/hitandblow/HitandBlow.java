@@ -3,6 +3,7 @@ package yshimizu.acro.hitandblow;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.InputMismatchException;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -22,14 +23,17 @@ public class HitandBlow {
 
 	public static void main(String[] args) {
 		System.out.println("!!START!! ---->>>>");
-		
+		System.out.print(FINAL_ANSWER[0]+FINAL_ANSWER[1]+FINAL_ANSWER[2]+"\n");
+
 		HitandBlow hb = new HitandBlow();
 		
 		hb.randomSelect();
 
 		for(int i=0;i<MAX_TRIALS;i++) {
 			System.out.printf("[phase %d]\n",i+1);
-			hb.challenge();
+			if(hb.challenge() == 1)
+				break;
+				
 		}
 		
 		System.out.printf("ANSWER is %d%d%d\n", FINAL_ANSWER[0],FINAL_ANSWER[1],FINAL_ANSWER[2]);
@@ -49,7 +53,7 @@ public class HitandBlow {
 		} while(fa[0] == fa[1]);
 		do {
 			fa[2] = rnd.nextInt(10);
-		} while(fa[2]==fa[1] || fa[1]==fa[0]);
+		} while(fa[2]==fa[1] || fa[2]==fa[0]);
 		
 		for(int i=0;i<3;i++)
 			FINAL_ANSWER[i] = fa[i];
@@ -60,28 +64,49 @@ public class HitandBlow {
 	 * マッチングフェーズ
 	 * @return
 	 */
-	public boolean challenge() {
-		String input_str;
+	public int challenge() {
+		int ans[] = new int[DIGIT];
+		
+		
+		System.out.printf("Please input %d numberes >> ",DIGIT);
+		Scanner sc = new Scanner(System.in);
+		sc.toString();
+		
+		String ans_pre_check;
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			System.out.print("Input Three numberes >> ");
-			input_str = br.readLine();
-		} catch (IOException e) {
-			e.getStackTrace();
-			return false;
+			ans_pre_check = sc.next(); 
+		} catch (InputMismatchException e) {
+			e.printStackTrace();
+			return -1;
 		}
 		
-		if (!input_str.matches("[0-9]{3}")) {
-			System.out.print("** It is inaccurate input data. Please input the integer of triple figures.\n");
-			return false;
+		if(ans_pre_check.length() != 3) {
+			System.out.print("** The length of the integer you entered is incorrect.\n");
+			System.out.printf("**** ans.length = %d\n",ans_pre_check.length());
+			return -1;
 		}
 		
-		int ans = Integer.parseInt(input_str);
-		//char ans[] = input_str.toCharArray();
-		//hb.hit_count();
+		if(!ans_pre_check.matches("[0-9]{3}")){
+			System.out.print("** Please enter an integer.\n");
+			return -1;
+		}
 		
-		hb_check(ans);
-		return true;
+		int ans_pre_checked;
+		ans_pre_checked = Integer.parseInt(ans_pre_check);
+		
+		for(int i=0;i<DIGIT;i++) {
+			ans[i] = intAt(ans_pre_checked,i);
+		}
+		
+		for(int i=0;i<DIGIT-1;i++)
+			for(int j=i+1;j<DIGIT;j++) {
+				if(ans[i] == ans[j]) {
+					System.out.print("** Please enter a value that is different from three integers.\n");
+					return -1;
+				}
+			}
+		
+		return hb_check(ans);
 		
 	}
 	
@@ -90,20 +115,20 @@ public class HitandBlow {
 	 * @param ans
 	 * @return 
 	 */
-	public boolean hb_check(int ans) {
-		boolean ok = true;
+	public int hb_check(int[] ans) {
+		boolean correct = true;
 		for(int i=0;i<3;i++) 
-			if (intAt(ans,i) != FINAL_ANSWER[i])
-				ok = false;
+			if (ans[i] != FINAL_ANSWER[i])
+				correct = false;
 		
 				
-		if(ok){
+		if(correct){
 			System.out.println("\n正解です！！\n");
-			return true;
+			return 1;
 		} else {
 			System.out.println("Hit: "+ hit_count(ans));
 			System.out.println("Blow: "+ blow_count(ans));
-			return false;
+			return 0;
 		}
 	}
 	
@@ -112,10 +137,10 @@ public class HitandBlow {
 	 * @param  ans ユーザ入力
 	 * @return hits Hit数 
 	 */
-	public int hit_count(int ans) {
+	public int hit_count(int[] ans) {
 		int hits=0;
 		for(int i=0;i < DIGIT;i++) {
-			if( FINAL_ANSWER[i] == intAt(ans,i))
+			if( FINAL_ANSWER[i] == ans[i])
 				hits++;
 		}
 		return hits;
@@ -126,11 +151,11 @@ public class HitandBlow {
 	 * @param ans ユーザ入力
 	 * @return blows Blow数
 	 */
-	public int blow_count(int ans) {
+	public int blow_count(int[] ans) {
 		int blows=0;
 		for(int i=0; i<DIGIT; i++)
 			for(int j=0; j<DIGIT; j++) { 
-				if(i!=j && FINAL_ANSWER[i] == intAt(ans, j))
+				if(i!=j && FINAL_ANSWER[i] == ans[j])
 					blows++;
 			}
 		return blows;
